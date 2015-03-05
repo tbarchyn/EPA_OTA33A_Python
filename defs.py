@@ -384,9 +384,9 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
     roll_amount = np.searchsorted(bins,roll_angle)
     #    roll_amount = int(len(gasConc_avg)/2. -3) - np.argmin(abs(gasConc_avg - np.average(wd3[~ws_mask],weights=gasConc[~ws_mask])))#np.where(tracer_avg == tracer_avg.max())[0][0]
     gasConc_avg = np.roll(gasConc_avg,roll_amount)
-    print("original peak deg = %d"%(peakdeg))
-    print("new peak deg = %d"%(mid_bins[np.argmax(gasConc_avg)]))
-    print("roll amount = %d "%(roll_amount))
+    # print("original peak deg = %d"%(peakdeg))
+    # print("new peak deg = %d"%(mid_bins[np.argmax(gasConc_avg)]))
+    # print("roll amount = %d "%(roll_amount))
     
     # get the bin with peak average concentration
     max_bin = mid_bins[np.where(gasConc_avg == gasConc_avg.max())[0][0]]
