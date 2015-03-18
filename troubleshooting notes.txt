@@ -1,0 +1,65 @@
+Issues with the Matlab code:
+
+Number of bins
+	[MATLAB]
+	the initial array of bins "deg" includes bin edges
+	the binning algorithm loops through this deg array and attempts to use an out-of range index value for binning. Does matlab not produce an error here? Other langages do.
+	
+	[PYTHON]
+	the initial array of bins "bins" includes bin edges
+	a subsequent array of bin centers "mid_bins" has a length of len(bins)-1
+	This mid_bins array solves the out-of range index problem. 
+	The centering algorithm means that there is no net effect on the data.
+	
+Filtering for low bin density
+	[MATLAB]
+	if the number of data points in a given bin is below a threshold "cut", the data is set to the minimum measured concentration "min(res)". Since we already went to the effort of calculating a baseline "lowmet" and subtracting it, this should be set to 0 instead.
+	
+	[PYTHON]
+	The cutoff procedure is slightly different here. If density is high enough, then the data is kept. This means that areas default data is set to 0.
+	
+	
+	
+Pressure units
+
+	Standard Pressure = 1013.25 mBar = 101.325 Bar = 101.325 kPa =  760 Torr = 1 atm
+
+	[MATLAB]
+	In the Matlab code, the pressure unit is marked as mBar in the code.
+	In the associated tables, the column is (mis)marked as Bar.
+	in fact, in the OTM 33A test method document, sample data shows pressures of 759.7 at a temp of 21.3 C; much closer to true STP if pressure is expressed in Torr. 
+	
+	***Are we sure the measured pressure is not in Torr?***** 
+	
+	the standard pressure used in the code is 1013.25 mBar or 101.325 kPa
+	The gas constant used in the code is 8.31415 m3 Pa K-1 mol-1
+	
+	there are a number of parameters containing temperature/pressure ratios or vice versa:
+		rt0rp0 = RT/P = 8.314159 * 298 / 101.325 (m3 bar K-1 mol-1 K kPa) 
+		rt1rp1 =  T/P = 298 / 1013.25 (K/mBar)
+		rt2rp2 =  P/T = [ mean P/ mean T ; another meanP/meanT; ...] (mBar/K)
+		rt3rp3 =  P/T = this mean P / this mean T     (mBar/K)
+		opt = 1e-6 * mw * 1000 / rt0rp0  [g m-3 ppm-1]  ** this constant turns a ppm mixing ratio into g/mol
+		
+	The pressure conversion to STP is done assuming that the data is in mBar via the formula
+	conversion factor = rt1rp1*rt2rp2 = Tstd/Pstd * Pmeas/Tmeas
+			since: 
+			Pmeas * Vmeas/Tmeas = Pstd*Vstd/Tstd 
+			Vstd = Vmeas * Pmeas/Tmeas * Tstd/Pstd
+	
+
+	
+	[PYTHON]
+	The gas constant used is 0.08205746 // universal gas constant [L atm K-1 mol-1] 
+	*** small correction: should be: 0.08205746  ****
+	The standard pressure used is 1 atm
+	the pressure unit of the data is marked as Pa in the code. This comment is wrong. it is treated as atm throughout.
+	the pressure unit of the data is marked as Bar in the csv file.
+
+	the following conversion is used to turn ppm into g m-3:
+		conc_ppm * mw / (1e6*R*T/(P*1000))
+		this is correct if the P is in atm. the factor of 1000 is conversion of m3 to L.
+		
+	A conversion (data/1000) is done upon loading measured pressure data. no other pressure unit conversions are done. 
+	This factor is wrong. It and should be 760 if the data is in Torr (1013.25 if the data is in mBar)
+	
