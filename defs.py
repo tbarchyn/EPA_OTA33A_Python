@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 #    CONSTANTS    #
 ###################
 
-R = 0.08205746 # universal gas constant [L atm K-1 mol-1]
+R = 0.08205736 # universal gas constant [L atm K-1 mol-1]
 P_stp = 1. # standard atmospheric pressure [atm]
 T_stp = 298. # standard temperature [K]
 
@@ -118,12 +118,14 @@ def ppm2gm3(conc,mw,T,P):
     a concentration in g/m3.
     
     INPUTS
-    conc :: concentration [ppb]
+    conc :: concentration [ppm]
     mw   :: molecular weight [g/mol]
     T    :: temperature [K]
     P    :: pressure [atm]
+    as defined above,  
+    R = 0.082  L atm K-1 mol-1
     '''
-    R = 0.082 # L atm K-1 mol-1
+
     mass = conc*mw
     V = (1e6*R*T)/(P*1000.)
     return mass/V
@@ -188,7 +190,7 @@ def load_excel(filename):
     ws2 = np.ma.array([sheet.cell_value(row,7) for row in range(1,sheet.nrows-n1)],mask=False)
     wd2 = np.ma.array([sheet.cell_value(row,8) for row in range(1,sheet.nrows-n1)],mask=False)
     temp =np.ma.array([sheet.cell_value(row,9) for row in range(1,sheet.nrows-n1)],mask=False)+273.15
-    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)/1000.
+    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)/760
     ws3z =np.ma.array([sheet.cell_value(row,12) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3y =np.ma.array([sheet.cell_value(row,14) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3x =np.ma.array([sheet.cell_value(row,13) for row in range(1,sheet.nrows-n1)],mask=False)
@@ -283,8 +285,8 @@ def custom_load_files(filename,chemical):
     wd3 = np.ma.array(a['wd3'],mask=False)
     ws2 = np.ma.array(a['ws2'],mask=False)
     wd2 = np.ma.array(a['wd2'],mask=False)
-    temp = np.ma.array(a['temp'],mask=False)+273.
-    pres = np.ma.array(a['pres'],mask=False)/1000.
+    temp = np.ma.array(a['temp'],mask=False)+273.15
+    pres = np.ma.array(a['pres'],mask=False)/760.
     ws3z = np.ma.array(a['ws3z'],mask=False)
     ws3x = np.ma.array(a['ws3x'],mask=False)
     ws3y = np.ma.array(a['ws3y'],mask=False)
