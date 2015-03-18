@@ -160,6 +160,22 @@ def fit_plot(x,y_data,fit,name):
     leg.get_frame().set_alpha(0.)
     pl.show()
 
+def plot_compareMethods(x,y1,y2):
+    name = 'compare plots'
+    fs=18
+    fig = pl.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x,y1,'o',c='k',label='Data1',lw=2)
+    ax.plot(x,y2,'o',c='r',label='Data2',lw=2)
+    ax.set_xlabel('Wind Direction [degrees]',fontsize=fs)
+    ax.set_ylabel('Average concentration [ppm]',fontsize=fs)
+    ax.set_title(name,fontsize=fs+2)
+    ax.set_xlim(0,360)
+    leg=ax.legend(fontsize=fs)
+    leg.get_frame().set_alpha(0.)
+    pl.show()
+
+
 def load_excel(filename):
     '''
     This function was created to read in the example data from an excel file.
@@ -355,7 +371,7 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
     # subtract tracer background. I had to manually apply the mask within the percentile function
     # because currently np.percentile does not play well with masked arrays.
     gasConc -= np.mean(gasConc[np.where(gasConc < np.percentile(gasConc[~ws_mask],5))]) # [g m-3]
-
+    # print(np.mean(gasConc[np.where(gasConc < np.percentile(gasConc[~ws_mask],5))]))
     # create wind direction bins from input
     bins = np.arange(theta_start,theta_end+delta_theta,delta_theta)
 
@@ -363,6 +379,10 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
     indices= np.digitize(wd3[~ws_mask],bins)-1
     
     # make array of the middle of each bin; len(mid_bins) = len(bins) - 1
+    # myList[5:] is the list from myList[5] to the end
+    # myList[:5] is the list up to and not including myList[5]
+    # the problem with the line as written here and in Matlab is that mid_bins
+    # should not have the same length as bins. it should be 1 less.
     mid_bins = (bins[:-1] + bins[1:])/2.
 
     # create empty arrays to store mean concentration as a function of wind direction
@@ -374,18 +394,46 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
 
         # ensure that the amount of data points exceeds the cutoff value
         # we don't want bins with a couple of values to dominate the fitting
-        
         if len(temp_vals) > int(cutoff*len(gasConc)/100.):
             gasConc_avg[i] = temp_vals.mean()
 
+#################
+    # alternative binning methodology consistent with matlab
+    concCount = np.zeros_like(mid_bins)
+    sumConc = np.zeros_like(mid_bins)
+    gasConc_avg2 = np.zeros_like(mid_bins)
+    
+    for i2 in range(0,len(mid_bins)):
+        for i1 in range(0,len(gasConc)-1):
+            if (wd3[i1] >= bins[i2]) and (wd3[i1] < bins[i2+1]):
+                concCount[i2] +=1
+                sumConc[i2] += gasConc[~ws_mask][i1]
+               #  print('bin ',i2,':',concCount[i2])
+    for i2 in range(0,len(mid_bins)):
+        if concCount[i2] >= int(cutoff*len(gasConc)/100):
+            gasConc_avg2[i2] = sumConc[i2]/concCount[i2]
+        else:
+            # note that this should probably be the background value, not the minimum of the data.
+            gasConc_avg2[i2] = 0 #min(gasConc[~ws_mask])
+
+    # deal with the rotation.
+    peakindex2 = np.argmax(gasConc_avg2)
+    peakdeg2 = mid_bins[peakindex2]
+    roll_angle2 = 180-peakdeg2
+    roll_amount2 = np.searchsorted(bins,roll_angle2)
+    gasConc_avg2=np.roll(gasConc_avg2,roll_amount2)
+###################
     # ensure that the peak concentration is around 180 degrees for fitting
 
     peakindex = np.argmax(gasConc_avg)
     peakdeg = mid_bins[peakindex]
     roll_angle = 180 - peakdeg
-    roll_amount = np.searchsorted(bins,roll_angle)
-    #    roll_amount = int(len(gasConc_avg)/2. -3) - np.argmin(abs(gasConc_avg - np.average(wd3[~ws_mask],weights=gasConc[~ws_mask])))#np.where(tracer_avg == tracer_avg.max())[0][0]
+    
+    roll_amount = int((len(gasConc_avg)-1)/2)-peakindex
+    #roll_amount = int(len(gasConc_avg)/2. -3) - np.argmin(abs(gasConc_avg - np.average(wd3[~ws_mask],weights=gasConc[~ws_mask])))#np.where(tracer_avg == tracer_avg.max())[0][0]
+
     gasConc_avg = np.roll(gasConc_avg,roll_amount)
+    #mid_bins = np.roll(mid_bins,roll_amount)
     # print("original peak deg = %d"%(peakdeg))
     # print("new peak deg = %d"%(mid_bins[np.argmax(gasConc_avg)]))
     # print("roll amount = %d "%(roll_amount))
@@ -422,7 +470,10 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
     # in my opionion does a great job
     fit_gasConc,cov_gasConc = curve_fit(gaussian_func,mid_bins,gasConc_avg,p0 = const_0) # fit coefficients
     if make_plot: fit_plot(mid_bins,gasConc_avg,fit_gasConc,chemical_name) # make plot if you want
-    # calculate the standard deviation of wind direction and turbulent intensity 
+    
+    if make_plot: plot_compareMethods(mid_bins,gasConc_avg,gasConc_avg2) # compare matlab way to python way
+    
+    # calculate the standard deviation of wind direction and turbulent intensity
     # for use in finding the PG stability class
     turbulent_intensity = np.std(ws3z)/np.mean(ws3) # turbulent intensity
     std_wind_dir = yamartino_method(wd3) # st. dev. of wind direction [deg]
