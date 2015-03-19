@@ -63,3 +63,15 @@ Pressure units
 	A conversion (data/1000) is done upon loading measured pressure data. no other pressure unit conversions are done. 
 	This factor is wrong. It and should be 760 if the data is in Torr (1013.25 if the data is in mBar)
 	
+	
+Accepted angle 
+	[PYTHON]
+	The masking of wd3, ws3, ws3z, temp, and press for angle is done after ws3 has been used to bin concentration. Concentration is also not masked at all. This step should happen earlier. It is not possible to apply this angle filter/mask without doing the binning process twice, unfortunately. 
+
+	
+	[MATLAB]
+	The masking for wind angle is actually a density filter using the bin density of 2%. It is done in the pre-processing step. This pre-processing, particularly in creating a full concentration bin with default bin sizes of 10 degrees, seems unnecessary and slow. 
+	
+	There is another user-entered parameter for wind angle filtering. It is called "al", not to be confused with the peak concentration, called "a1". This is also applied in the pre-processing step. 
+	
+	
