@@ -352,29 +352,58 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
     # engage wind speed limit cutoff
     if wslimit > 0.0:
         # create a mask array where False indices are where wind speed < wslimit
-        ws_mask = np.ma.masked_less_equal(ws3,wslimit).mask
-        
-        # apply the created mask to the relevant variables
-        time.mask   = ws_mask
-        gasConc.mask = ws_mask
-        ws3.mask    = ws_mask
-        wd3.mask    = ws_mask
-        temp.mask   = ws_mask
-        pres.mask   = ws_mask
-        ws3z.mask   = ws_mask
+        ws_mask = np.ma.masked_less_equal(ws3,wslimit)
 
     else:
         # if we don't want to mask any wind speeds, we have to make sure that we 
         # don't lose any data during the np.percentile step below
         ws_mask = np.ones_like(gasConc.mask)*False
-        
+    
     # subtract tracer background. I had to manually apply the mask within the percentile function
     # because currently np.percentile does not play well with masked arrays.
     gasConc -= np.mean(gasConc[np.where(gasConc < np.percentile(gasConc[~ws_mask],5))]) # [g m-3]
     # print(np.mean(gasConc[np.where(gasConc < np.percentile(gasConc[~ws_mask],5))]))
+
+
+    # it is not possible to do the angle cutoff mask without this extra binning step.
+    # for consistency with Matlab code, we use default 10 degree bins.
+    
+    # this is the initial bin density cutoff.
+
+    mybin = np.arange(1,361,10) # not sure why matlab code uses bins (1,10,361)
+    maskIndices = np.digitize(wd3,mybin)-1
+    gasConc_avg0 = np.zeros(36)
+    for i in range(maskIndices.min(),maskIndices.max()+1):
+        temp_vals = gasConc[np.where(maskIndices==i)]
+        if len(temp_vals) > int(cutoff*len(gasConc)/100.):
+            gasConc_avg0[i] = temp_vals.mean()
+
+    # get the bin with peak average concentration
+    max_bin_center= 10 * np.where(gasConc_avg0 == gasConc_avg0.max())[0][0] - 5
+
+    # calculate wind direction cut off based on input value
+    bin_cut_lo = max_bin_center - wdlimit
+    bin_cut_hi = max_bin_center + wdlimit
+
+    # get the indices of where wd3 is outside of wind direction limit
+    #    wd_mask = np.where((wd3 > bin_cut_hi) | (wd3 < bin_cut_lo))
+    wd_mask = np.ma.masked_where((wd3 > bin_cut_hi) | (wd3 < bin_cut_lo),wd3)
+
+    # create a mask for both ws and wd
+    w_mask = np.ma.mask_or(ws_mask,wd_mask)
+    
+    # apply the created mask to the relevant variables
+    time.mask   = w_mask
+    gasConc.mask = w_mask
+    ws3.mask    = w_mask
+    wd3.mask    = w_mask
+    temp.mask   = w_mask
+    pres.mask   = w_mask
+    ws3z.mask   = w_mask
+
     # create wind direction bins from input
     bins = np.arange(theta_start,theta_end+delta_theta,delta_theta)
-
+    
     # get indices for which bin every measured wind speed is in
     indices= np.digitize(wd3[~ws_mask],bins)-1
     
@@ -390,12 +419,7 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
 
     # for each wind direction bin, find the corresponding mean tracer concentration
     for i in range(indices.min(),indices.max()+1):
-        temp_vals = gasConc[~ws_mask][np.where(indices == i)]
-
-        # ensure that the amount of data points exceeds the cutoff value
-        # we don't want bins with a couple of values to dominate the fitting
-        if len(temp_vals) > int(cutoff*len(gasConc)/100.):
-            gasConc_avg[i] = temp_vals.mean()
+        temp_vals = gasConc[~w_mask][np.where(indices == i)]
 
 #################
     # alternative binning methodology consistent with matlab
@@ -407,14 +431,14 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
         for i1 in range(0,len(gasConc)-1):
             if (wd3[i1] >= bins[i2]) and (wd3[i1] < bins[i2+1]):
                 concCount[i2] +=1
-                sumConc[i2] += gasConc[~ws_mask][i1]
+                sumConc[i2] += gasConc[~w_mask][i1]
                #  print('bin ',i2,':',concCount[i2])
     for i2 in range(0,len(mid_bins)):
         if concCount[i2] >= int(cutoff*len(gasConc)/100):
             gasConc_avg2[i2] = sumConc[i2]/concCount[i2]
         else:
             # note that this should probably be the background value, not the minimum of the data.
-            gasConc_avg2[i2] = 0 #min(gasConc[~ws_mask])
+            gasConc_avg2[i2] = 0 #min(gasConc[~w_mask])
 
     # deal with the rotation.
     peakindex2 = np.argmax(gasConc_avg2)
@@ -447,20 +471,10 @@ def OTA33A(gasConc,temp,pres,ws3z,ws3x,ws3y,time,wslimit,wdlimit,cutoff,distance
 
     # add the roll amount to wind direction to correspond correctly to the
     # average concentration array
-    wd3 = wd3 + (roll_amount-1)*delta_theta
+    wd3 = wd3 + roll_angle
 
     # ensure that wind direction is within 0 to 360
     wd3 = wrap(wd3)
-
-    # get the indices of where wd3 is outside of wind direction limit
-    wd_mask = np.where((wd3 > bin_cut_hi) | (wd3 < bin_cut_lo))
-    
-    # mask arrays where wd3 is outside of wind direction cutoff
-    wd3[wd_mask] = np.ma.masked
-    ws3[wd_mask] = np.ma.masked
-    ws3z[wd_mask] = np.ma.masked
-    temp[wd_mask] = np.ma.masked
-    pres[wd_mask] = np.ma.masked
 
     # fitting procedure
     # here are some initial guesses that produce good results
