@@ -1,4 +1,5 @@
-Issues with the Matlab code:
+Differences/Issues with the Matlab/Python code:
+
 
 Number of bins
 	[MATLAB]
@@ -51,7 +52,7 @@ Pressure units
 	
 	[PYTHON]
 	The gas constant used is 0.08205746 // universal gas constant [L atm K-1 mol-1] 
-	*** small correction: should be: 0.08205746  ****
+	CORRECTED *** small correction: should be: 0.08205746  ****
 	The standard pressure used is 1 atm
 	the pressure unit of the data is marked as Pa in the code. This comment is wrong. it is treated as atm throughout.
 	the pressure unit of the data is marked as Bar in the csv file.
@@ -62,7 +63,7 @@ Pressure units
 		
 	A conversion (data/1000) is done upon loading measured pressure data. no other pressure unit conversions are done. 
 	This factor is wrong. It and should be 760 if the data is in Torr (1013.25 if the data is in mBar)
-	
+	CORRECTED to 1013.25
 	
 Accepted angle 
 	[PYTHON]
@@ -70,8 +71,9 @@ Accepted angle
 
 	
 	[MATLAB]
-	The masking for wind angle is actually a density filter using the bin density of 2%. It is done in the pre-processing step. This pre-processing, particularly in creating a full concentration bin with default bin sizes of 10 degrees, seems unnecessary and slow. 
+	The masking for wind angle is actually a density filter using the bin density of 2%. It is done in the pre-processing step. This pre-processing, particularly in creating a full concentration bin with default bin sizes of 10 degrees, seems unnecessary and slow. I think the reason for this pre-binning is to allow for an initial user-entered wind angle filtering.
 	
 	There is another user-entered parameter for wind angle filtering. It is called "al", not to be confused with the peak concentration, called "a1". This is also applied in the pre-processing step. 
+	
 	
 	
