@@ -159,6 +159,43 @@ def fit_plot(x,y_data,fit,name):
         required to make a plot')
 
 
+def Tara_fit_plot(x,y_data,fit,name,text):
+    '''
+        This definition will plot the actual data versus the Gaussian fit performed
+        
+        INPUTS
+        
+        x      :: wind direction bins
+        y_data :: calculated average concentration
+        fit    :: the fit coefficients for a gaussian function
+        name   :: this string will be made the title
+        '''
+    
+    try:
+        import matplotlib.pyplot as plt
+        xAnalytic = np.linspace(x.min(),x.max(),1000)
+        y_fit = gaussian_func(xAnalytic,fit[0],fit[1],fit[2])
+        
+        R = np.corrcoef(y_data,gaussian_func(x,fit[0],fit[1],fit[2]))[0,1]
+        
+        fs=18
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(x,y_data,'o',c='k',label='Data',lw=2)
+        ax.plot(xAnalytic,y_fit,c='r',label='Fit',lw=2)
+        ax.set_xlabel('Wind Direction [degrees]',fontsize=fs)
+        ax.set_ylabel('Average concentration [ppm]',fontsize=fs)
+        ax.set_title(name,fontsize=fs+2)
+        ax.set_xlim(0,360)
+        ax.text(np.diff(ax.get_xlim())*.05+ax.get_xlim()[0],np.diff(ax.get_ylim())*.8+ax.get_ylim()[0],'a = %.4f\nsigma = %.2f\nR = %.4f\n%s' % (fit[0],fit[1],R,text),color='r',fontsize=18)
+        leg=ax.legend(fontsize=fs)
+        leg.get_frame().set_alpha(0.)
+        plt.show()
+    
+    except:
+        print('Your system does not appear to have Matplotlib installed. This is \
+              required to make a plot')
+
 
 def yamartino_method(wd):
     '''
@@ -362,7 +399,7 @@ class fieldData:
         # in my opionion does a great job
         fit_gasConc,cov_gasConc = curve_fit(gaussian_func,mid_bins,gasConc_avg,p0 = const_0) # fit coefficients
 
-        if make_plot: fit_plot(mid_bins,gasConc_avg,fit_gasConc,self.chemical_name) # make plot if you want
+
 
         # calculate the standard deviation of wind direction and turbulent intensity 
         # for use in finding the PG stability class
@@ -388,4 +425,6 @@ class fieldData:
 
         # now L/min at STP
         volumeRate = 2*np.pi*fit_amplitude*np.mean(self.windSpeed[~wd3_mask])*sy*sz/rho_gasConc_stp*60 # [L min-1]
+        
+        if make_plot: Tara_fit_plot(mid_bins,gasConc_avg,fit_gasConc,self.chemical_name,str(massRate)+" g/s") # make plot if you want
         return massRate, volumeRate
