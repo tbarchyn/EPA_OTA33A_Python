@@ -344,6 +344,8 @@ class fieldData:
         # because currently np.percentile does not play well with masked arrays.
         gasConcAboveBG =self.gasConc- np.mean(self.gasConc[np.where(self.gasConc < np.percentile(self.gasConc[:],5))]) # [g m-3]
 
+
+
         # create wind direction bins from input
         bins = np.arange(theta_start,theta_end+delta_theta/2.,delta_theta)
 
@@ -381,6 +383,7 @@ class fieldData:
         roll_amount = int(len(gasConc_avg)/2.-1) - np.argmin(abs(gasConc_avg - np.average(self.windDir[:],weights=gasConcAboveBG[:])))
         gasConc_avg = np.roll(gasConc_avg,roll_amount)
 
+
         # grab the max bin after rolling just incase it's not exactly 180
         max_bin2 = mid_bins[np.where(gasConc_avg == gasConc_avg.max())[0][0]]
 
@@ -399,20 +402,25 @@ class fieldData:
         # in my opionion does a great job
         fit_gasConc,cov_gasConc = curve_fit(gaussian_func,mid_bins,gasConc_avg,p0 = const_0) # fit coefficients
 
-
+        np.savetxt("windDirMasked.txt",self.windDir[~wd3_mask],fmt="%s")
+        np.savetxt("gasConcMasked.txt",gasConcAboveBG[~wd3_mask],fmt="%s")
+        np.savetxt("windSpdMasked.txt",self.windSpeed[~wd3_mask],fmt="%s")
+        np.savetxt("wd3_mask.txt",wd3_mask,fmt="%s")
 
         # calculate the standard deviation of wind direction and turbulent intensity 
         # for use in finding the PG stability class
         turbulent_intensity = np.std(self.w[~wd3_mask])/np.mean(self.windSpeed[~wd3_mask]) # turbulent intensity
         std_wind_dir = yamartino_method(self.windDir[~wd3_mask]) # st. dev. of wind direction [deg]
-
+        print ("ws3 avg = %.5f" %(np.mean(self.windSpeed[~wd3_mask])))
         # calcualte the vertical and horizontal dispersion of the gaussian plume
         # using PGT stabiliy classes
-        sy, sz = sigma(self.distance,std_wind = std_wind_dir,turb = turbulent_intensity,tables=True,stab=None,v=verbose) # [m]
+        sy, sz = sigma(float(self.distance),std_wind = std_wind_dir,turb = turbulent_intensity,tables=True,stab=None,v=verbose) # [m]
+        print (self.distance, std_wind_dir, turbulent_intensity)
 
         # convert tracers from ppm to g m-3
         fit_amplitude = ppm2gm3(fit_gasConc[0],self.mw_chemical,np.mean(self.T[~wd3_mask]),np.mean(self.P[~wd3_mask]))
-
+        print("A=%.4f \nmw=%.4f g/mol \nT=%.4f K \nP=%.4f ?" %(fit_gasConc[0],self.mw_chemical,np.mean(self.T[~wd3_mask]),np.mean(self.P[~wd3_mask])))
+        print("u=%.4f\nsy=%.4f\nsz=%.4f" % (np.mean(self.windSpeed[~wd3_mask]),sy,sz ))
         # calculate the density of the tracers using the ideal gas law for conversion back to L/min if desired
         rho_gasConc_stp = (P_stp*self.mw_chemical)/(R*T_stp) # density of gas at STP [g L-1]
         rho_gasConc = (np.mean(self.P)*self.mw_chemical)/(R*np.mean(self.T)) # density of gas at ambient conditions [g L-1]
