@@ -19,7 +19,10 @@ Filtering for low bin density
 	[PYTHON]
 	The cutoff procedure is slightly different here. If density is high enough, then the data is kept. This means that areas default data is set to 0.
 	
-	
+Masking
+	[PYTHON]
+	there are 2 places where data masks are calculated: the wind speed mask, early on, and the wind direction mask, later.
+	The wind speed mask gets overwritten with the wind direction mask. 
 	
 Pressure units
 
@@ -30,7 +33,7 @@ Pressure units
 	In the associated tables, the column is (mis)marked as Bar.
 	in fact, in the OTM 33A test method document, sample data shows pressures of 759.7 at a temp of 21.3 C; much closer to true STP if pressure is expressed in Torr. 
 	
-	***Are we sure the measured pressure is not in Torr?***** 
+	***Are we sure the measured pressure in STR_3061611_01.xls is not in Torr?***** 
 	
 	the standard pressure used in the code is 1013.25 mBar or 101.325 kPa
 	The gas constant used in the code is 8.31415 m3 Pa K-1 mol-1
@@ -61,9 +64,10 @@ Pressure units
 		conc_ppm * mw / (1e6*R*T/(P*1000))
 		this is correct if the P is in atm. the factor of 1000 is conversion of m3 to L.
 		
-	A conversion (data/1000) is done upon loading measured pressure data. no other pressure unit conversions are done. 
+	A conversion (data/1000) is done upon loading measured pressure data. no other pressure unit conversions are done.
 	This factor is wrong. It and should be 760 if the data is in Torr (1013.25 if the data is in mBar)
-	CORRECTED to 1013.25
+	CORRECTED *** to 1013.25 ***
+	I still believe this factor should be 760 for the data in the STR_3061611_01.xls test file.
 	
 Accepted angle 
 	[PYTHON]
@@ -76,4 +80,23 @@ Accepted angle
 	There is another user-entered parameter for wind angle filtering. It is called "al", not to be confused with the peak concentration, called "a1". This is also applied in the pre-processing step. 
 	
 	
+Sonic Correction
+	[PYTHON] [MATLAB]
+	both programs treat this correction in the same way. However, the limitation that data be in the southern quadrant is not necessary for the method. 
+	1) the use of atan instead of atan2 in the calculation of RA and RB angles. 
+	2) the calculation of the rotated direction is routinely done with the formula
+		180 + atan2(-y, -x)*pi/2
+	Standard rotation formulas stipulate using
+		90 - atan2(y, x)*pi/2 + 90 
+	
+	the calculated wd for this method is centered at 0 for the file STR_3061611_11.xls. This is not what we want. 
+	
+	See associated word document showing issues and solutions. 
+	
+Stability Class Determination
+	[MATLAB]
+	There is extra code present that does not end up being used. Only the 2d anemometer wind speed + the 3d anemometer turbulent intensity are used to determine wind speed
+	
+	[PYTHON]
+	Instead of using the 2d anemometer data, the 3d anemometer data is used for the 2d wind speed. 
 	
