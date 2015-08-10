@@ -265,7 +265,9 @@ def sonic_correction(u,v,w):
     mmndir = 180 + (np.arctan2(-1*(mnws3z),-1*(mnnws3x))*180/np.pi)
 
     # calculate and asign new 3D sonic 2D wind direction
-    wd3 = 180+(np.arctan2(-1*(v_rot),-1*(u_rot2))*180/np.pi)
+   # wd3 = 180+(np.arctan2(-1*(v_rot),-1*(u_rot2))*180/np.pi)
+
+    wd3 = 180-(np.arctan2((v_rot),(u_rot2))*180/np.pi)
     # calculate and asign new 3D sonic 2D wind speed
     ws3 = np.sqrt(u_rot2**2 + v_rot**2)
 
@@ -274,7 +276,7 @@ def sonic_correction(u,v,w):
 
 class fieldData:
     def __init__(self,gasConc,temp,pres,ws3z,ws3x,ws3y,distance,mw_chemical,chemical_name):
-        
+
         self.gasConc = np.ma.array(gasConc)
         self.T = np.ma.array(temp)
         self.P = np.ma.array(pres)
@@ -283,7 +285,9 @@ class fieldData:
         self.chemical_name = chemical_name
         # correct 3D sonic data so that mean(wsz) ~ 0.
         self.u, self.v, self.w, self.windDir, self.windSpeed = sonic_correction(np.ma.array(ws3x),np.ma.array(ws3y),np.ma.array(ws3z))
-
+        np.savetxt("wsX.txt",self.u,fmt="%s")
+        np.savetxt("wsY.txt",self.v,fmt="%s")
+        np.savetxt("wsZ.txt",self.w,fmt="%s")
 
     def getEmissionRate(self,wslimit=0.,wdlimit=60.,cutoff=2.,theta_start=5,theta_end=365.,delta_theta=10.,make_plot=False,verbose=False):
 
@@ -319,7 +323,7 @@ class fieldData:
         emission_gasConc_volume_per_time :: emission rate in SLPM
         emission_gasConc_mass_per_time   :: emission rate in [g/s]
         '''
-
+        np.savetxt("windDirStart.txt",self.windDir,fmt="%s")
         # engage wind speed limit cutoff
         if wslimit > 0.0:
             # create a mask array where False indices are where wind speed < wslimit
@@ -378,7 +382,7 @@ class fieldData:
         # mask values that are not within wind direction range
         self.windDir[np.where((self.windDir <= bin_cut_lo) | (self.windDir >= bin_cut_hi))] = np.ma.masked
         wd3_mask = self.windDir.mask
-
+        np.savetxt("windDirMasked.txt",self.windDir[~wd3_mask],fmt="%s")
         # ensure that the peak concentration is around 180 degrees for fitting
         roll_amount = int(len(gasConc_avg)/2.-1) - np.argmin(abs(gasConc_avg - np.average(self.windDir[:],weights=gasConcAboveBG[:])))
         gasConc_avg = np.roll(gasConc_avg,roll_amount)
@@ -402,7 +406,7 @@ class fieldData:
         # in my opionion does a great job
         fit_gasConc,cov_gasConc = curve_fit(gaussian_func,mid_bins,gasConc_avg,p0 = const_0) # fit coefficients
 
-        np.savetxt("windDirMasked.txt",self.windDir[~wd3_mask],fmt="%s")
+        np.savetxt("windDirMaskedRolled.txt",self.windDir,fmt="%s")
         np.savetxt("gasConcMasked.txt",gasConcAboveBG[~wd3_mask],fmt="%s")
         np.savetxt("windSpdMasked.txt",self.windSpeed[~wd3_mask],fmt="%s")
         np.savetxt("wd3_mask.txt",wd3_mask,fmt="%s")
