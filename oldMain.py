@@ -32,6 +32,9 @@ distance = 42. # meters
 chemical_name = 'CH4' # for plots
 mw_chemical   = 16.04 # [g mol-1]
 
+temp += 273.15 #now in Kelvin
+pres /= 760  #now in Atm
+
 # BIN LIMITS
 theta_start   = 5.
 theta_end     = 365.
@@ -42,6 +45,7 @@ wslimit       = 0.0 # set wind speed cut limit [m s-1]
 wdlimit       = 60.0 # set wind angle cut limit [+/- deg]. 180 indicates no filter
 cutoff        = 2 # bin density cutoff limit
 
+np.savetxt("windDirOrig.txt",wd3,fmt="%s")
 ############################
 #    BEGIN CALCULATION     #
 ############################

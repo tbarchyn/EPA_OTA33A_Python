@@ -27,8 +27,8 @@ def load_excel(filename,n1=0,gasCalibration=1.):
     wd3 = np.ma.array([sheet.cell_value(row,6) for row in range(1,sheet.nrows-n1)],mask=False)
     ws2 = np.ma.array([sheet.cell_value(row,7) for row in range(1,sheet.nrows-n1)],mask=False)
     wd2 = np.ma.array([sheet.cell_value(row,8) for row in range(1,sheet.nrows-n1)],mask=False)
-    temp =np.ma.array([sheet.cell_value(row,9) for row in range(1,sheet.nrows-n1)],mask=False)+273.15
-    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)/1013.25
+    temp =np.ma.array([sheet.cell_value(row,9) for row in range(1,sheet.nrows-n1)],mask=False)
+    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3z =np.ma.array([sheet.cell_value(row,12) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3y =np.ma.array([sheet.cell_value(row,14) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3x =np.ma.array([sheet.cell_value(row,13) for row in range(1,sheet.nrows-n1)],mask=False)
@@ -65,8 +65,8 @@ def load_excel_old(filename):
     wd3 = np.ma.array([sheet.cell_value(row,6) for row in range(1,sheet.nrows-n1)],mask=False)
     ws2 = np.ma.array([sheet.cell_value(row,7) for row in range(1,sheet.nrows-n1)],mask=False)
     wd2 = np.ma.array([sheet.cell_value(row,8) for row in range(1,sheet.nrows-n1)],mask=False)
-    temp =np.ma.array([sheet.cell_value(row,9) for row in range(1,sheet.nrows-n1)],mask=False)+273.15
-    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)/1013.25
+    temp =np.ma.array([sheet.cell_value(row,9) for row in range(1,sheet.nrows-n1)],mask=False)
+    pres =np.ma.array([sheet.cell_value(row,11) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3z =np.ma.array([sheet.cell_value(row,12) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3y =np.ma.array([sheet.cell_value(row,14) for row in range(1,sheet.nrows-n1)],mask=False)
     ws3x =np.ma.array([sheet.cell_value(row,13) for row in range(1,sheet.nrows-n1)],mask=False)
