@@ -285,9 +285,9 @@ class fieldData:
         self.chemical_name = chemical_name
         # correct 3D sonic data so that mean(wsz) ~ 0.
         self.u, self.v, self.w, self.windDir, self.windSpeed = sonic_correction(np.ma.array(ws3x),np.ma.array(ws3y),np.ma.array(ws3z))
-        np.savetxt("wsX.txt",self.u,fmt="%s")
-        np.savetxt("wsY.txt",self.v,fmt="%s")
-        np.savetxt("wsZ.txt",self.w,fmt="%s")
+        #np.savetxt("wsX.txt",self.u,fmt="%s")
+        #np.savetxt("wsY.txt",self.v,fmt="%s")
+        #np.savetxt("wsZ.txt",self.w,fmt="%s")
 
     def getEmissionRate(self,wslimit=0.,wdlimit=60.,cutoff=2.,theta_start=5,theta_end=365.,delta_theta=10.,make_plot=False,verbose=False):
 
@@ -382,7 +382,7 @@ class fieldData:
         # mask values that are not within wind direction range
         self.windDir[np.where((self.windDir <= bin_cut_lo) | (self.windDir >= bin_cut_hi))] = np.ma.masked
         wd3_mask = self.windDir.mask
-        np.savetxt("windDirMasked.txt",self.windDir[~wd3_mask],fmt="%s")
+        #np.savetxt("windDirMasked.txt",self.windDir[~wd3_mask],fmt="%s")
         # ensure that the peak concentration is around 180 degrees for fitting
         roll_amount = int(len(gasConc_avg)/2.-1) - np.argmin(abs(gasConc_avg - np.average(self.windDir[:],weights=gasConcAboveBG[:])))
         gasConc_avg = np.roll(gasConc_avg,roll_amount)
@@ -406,10 +406,11 @@ class fieldData:
         # in my opionion does a great job
         fit_gasConc,cov_gasConc = curve_fit(gaussian_func,mid_bins,gasConc_avg,p0 = const_0) # fit coefficients
 
-        np.savetxt("windDirMaskedRolled.txt",self.windDir,fmt="%s")
-        np.savetxt("gasConcMasked.txt",gasConcAboveBG[~wd3_mask],fmt="%s")
-        np.savetxt("windSpdMasked.txt",self.windSpeed[~wd3_mask],fmt="%s")
-        np.savetxt("wd3_mask.txt",wd3_mask,fmt="%s")
+        #debugging saves
+        #np.savetxt("windDirMaskedRolled.txt",self.windDir,fmt="%s")
+        #np.savetxt("gasConcMasked.txt",gasConcAboveBG[~wd3_mask],fmt="%s")
+        #np.savetxt("windSpdMasked.txt",self.windSpeed[~wd3_mask],fmt="%s")
+        #np.savetxt("wd3_mask.txt",wd3_mask,fmt="%s")
 
         # calculate the standard deviation of wind direction and turbulent intensity 
         # for use in finding the PG stability class
